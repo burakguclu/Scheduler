@@ -56,7 +56,6 @@ export function parseCourses(coursesData) {
 function parseSchedule(scheduleStr) {
   if (!scheduleStr) return [];
   
-  // Örnek format: "Mo 09-11 We 13-15"
   const days = {
     'Mo': 'Pazartesi',
     'Tu': 'Salı',
@@ -78,6 +77,7 @@ function parseSchedule(scheduleStr) {
           startHour: start,
           endHour: end
         });
+        console.log('Parsed Schedule:', { day, startHour: start, endHour: end });
       }
     }
   }

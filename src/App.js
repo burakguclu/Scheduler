@@ -11,6 +11,8 @@ function App() {
   const [totalCredits, setTotalCredits] = useState(0);
   const [totalECTS, setTotalECTS] = useState(0);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
+  const [possibleSchedules, setPossibleSchedules] = useState([]);
+  const [selectedScheduleIndex, setSelectedScheduleIndex] = useState(0);
 
   // Excel verilerini yükle
   useEffect(() => {
@@ -26,9 +28,16 @@ function App() {
   const weekDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 
   const handleCourseSelect = (course) => {
-    // Ders zaten eklenmişse kontrol et
+    // Ders zaten eklenmişse kontrol
     if (selectedCourses.some(selected => selected.code === course.code)) {
       alert('Bu ders zaten eklenmiş!');
+      return;
+    }
+
+    // Kredi sınırı kontrolü
+    const newTotalCredits = totalCredits + Number(course.credits);
+    if (newTotalCredits > 25) {
+      alert('Maksimum 25 kredi seçebilirsiniz!');
       return;
     }
 
@@ -49,12 +58,42 @@ function App() {
     }
 
     setSelectedCourses([...selectedCourses, course]);
-    setTotalCredits(prev => prev + Number(course.credits));
+    setTotalCredits(newTotalCredits);
     setTotalECTS(prev => prev + Number(course.ects));
     
     // Seçilen dersin tüm sectionlarını kaldır
     const baseCode = course.code.split('_')[0];
     setCourses(courses.filter(c => !c.code.startsWith(baseCode)));
+  };
+
+  // Olası ders programlarını oluştur
+  const generatePossibleSchedules = (courses) => {
+    let schedules = [[]]; // Başlangıçta boş bir program
+
+    courses.forEach(course => {
+      const newSchedules = [];
+      
+      schedules.forEach(schedule => {
+        // Bu dersin schedule'ı ile mevcut schedule'ın çakışıp çakışmadığını kontrol et
+        const hasConflict = schedule.some(existingCourse => {
+          return existingCourse.schedule.some(existingTime => {
+            return course.schedule.some(newTime => {
+              return existingTime.day === newTime.day && 
+                     ((existingTime.startHour <= newTime.startHour && existingTime.endHour > newTime.startHour) ||
+                      (existingTime.startHour < newTime.endHour && existingTime.endHour >= newTime.endHour));
+            });
+          });
+        });
+
+        if (!hasConflict) {
+          newSchedules.push([...schedule, course]);
+        }
+      });
+
+      schedules = newSchedules;
+    });
+
+    return schedules;
   };
 
   const handleCourseRemove = (courseToRemove) => {
@@ -92,32 +131,61 @@ function App() {
     course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Haftalık program hücresinin içeriğini render eden fonksiyon
+  // Program değiştirme butonları
+  const ProgramControls = () => (
+    <div className="program-controls">
+      <button 
+        onClick={() => setSelectedScheduleIndex(prev => Math.max(0, prev - 1))}
+        disabled={selectedScheduleIndex === 0}
+      >
+        ← Önceki Program
+      </button>
+      <span>Program {selectedScheduleIndex + 1} / {possibleSchedules.length}</span>
+      <button 
+        onClick={() => setSelectedScheduleIndex(prev => Math.min(possibleSchedules.length - 1, prev + 1))}
+        disabled={selectedScheduleIndex === possibleSchedules.length - 1}
+      >
+        Sonraki Program →
+      </button>
+    </div>
+  );
+
+  // Render fonksiyonunu güncelle
   const renderScheduleCell = (day, timeSlot) => {
     const hour = parseInt(timeSlot.split(':')[0]);
-    const coursesInSlot = selectedCourses.filter(course => 
-      course.schedule.some(s => 
-        s.day === day && 
-        s.startHour <= hour && 
-        s.endHour > hour
-      )
-    );
+    
+    // Bu saat diliminde olan dersleri bul
+    const coursesInSlot = selectedCourses.filter(course => {
+      return course.schedule.some(scheduleItem => {
+        return scheduleItem.day === day && 
+               scheduleItem.startHour <= hour && 
+               scheduleItem.endHour > hour;
+      });
+    });
 
-    return coursesInSlot.map((course, idx) => (
-      <div 
-        key={`${course.code}-${idx}`} 
-        className="scheduled-course"
-        style={{
-          backgroundColor: `hsl(${hashCode(course.code) % 360}, 70%, 60%)`,
-          padding: '4px',
-          marginBottom: coursesInSlot.length > 1 ? '2px' : '0',
-          cursor: 'pointer'
-        }}
-        onClick={() => handleCourseSelect(course)}
-      >
-        <div className="course-code">{course.code}</div>
-      </div>
-    ));
+    // Eğer bu zaman diliminde ders varsa göster
+    if (coursesInSlot.length > 0) {
+      return coursesInSlot.map((course, idx) => (
+        <div 
+          key={`${course.code}-${idx}`} 
+          className="scheduled-course"
+          style={{
+            backgroundColor: `hsl(${hashCode(course.code) % 360}, 70%, 60%)`,
+            color: 'white',
+            padding: '4px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          {course.code.split('_')[0]}
+        </div>
+      ));
+    }
+
+    return null;
   };
 
   // Renk oluşturmak için yardımcı fonksiyon
@@ -133,7 +201,7 @@ function App() {
     <div className="App">
       <div className="container split-layout">
         <div className="weekly-schedule">
-          <h2>Haftalık Program</h2>
+          {possibleSchedules.length > 1 && <ProgramControls />}
           <table>
             <thead>
               <tr>

@@ -24,6 +24,12 @@ function App() {
   const weekDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 
   const handleCourseSelect = (course) => {
+    // Ders zaten eklenmişse kontrol et
+    if (selectedCourses.some(selected => selected.code === course.code)) {
+      alert('Bu ders zaten eklenmiş!');
+      return;
+    }
+
     // Çakışma kontrolü
     const hasConflict = selectedCourses.some(selectedCourse => {
       return selectedCourse.schedule.some(selectedTime => {
@@ -43,7 +49,7 @@ function App() {
     setSelectedCourses([...selectedCourses, course]);
     setTotalCredits(prev => prev + Number(course.credits));
     setTotalECTS(prev => prev + Number(course.ects));
-    setSearchTerm(''); // Arama kutusunu temizle
+    setSearchTerm('');
   };
 
   const handleCourseRemove = (courseToRemove) => {
@@ -89,11 +95,12 @@ function App() {
         style={{
           backgroundColor: `hsl(${hashCode(course.code) % 360}, 70%, 60%)`,
           padding: '4px',
-          marginBottom: coursesInSlot.length > 1 ? '2px' : '0'
+          marginBottom: coursesInSlot.length > 1 ? '2px' : '0',
+          cursor: 'pointer'
         }}
+        onClick={() => handleCourseSelect(course)}
       >
         <div className="course-code">{course.code}</div>
-        <div className="course-room">{course.room}</div>
       </div>
     ));
   };
@@ -168,7 +175,10 @@ function App() {
                 <span>{course.code} - {course.name}</span>
                 <span>{course.schedule.map(s => `${s.day} ${s.startHour}:00-${s.endHour}:00`).join(', ')}</span>
                 <button 
-                  onClick={() => handleCourseRemove(course)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCourseRemove(course);
+                  }}
                   className="remove-button"
                 >
                   Çıkar
@@ -181,7 +191,12 @@ function App() {
             <h3>Mevcut Dersler</h3>
             <div className="course-list">
               {filteredCourses.map((course, index) => (
-                <div key={index} className="course-item">
+                <div 
+                  key={index} 
+                  className="course-item"
+                  onClick={() => handleCourseSelect(course)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="course-info">
                     <strong>{course.code}</strong>
                     <p>{course.name}</p>
@@ -194,12 +209,6 @@ function App() {
                       ).join(', ')}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => handleCourseSelect(course)}
-                    className="add-button"
-                  >
-                    Ekle
-                  </button>
                 </div>
               ))}
             </div>

@@ -7,8 +7,10 @@ function App() {
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [courses, setCourses] = useState([]);
+  const [originalCourses, setOriginalCourses] = useState([]);
   const [totalCredits, setTotalCredits] = useState(0);
   const [totalECTS, setTotalECTS] = useState(0);
+  const [isFileUploaded, setIsFileUploaded] = useState(false);
 
   // Excel verilerini yükle
   useEffect(() => {
@@ -49,13 +51,24 @@ function App() {
     setSelectedCourses([...selectedCourses, course]);
     setTotalCredits(prev => prev + Number(course.credits));
     setTotalECTS(prev => prev + Number(course.ects));
-    setSearchTerm('');
+    
+    // Seçilen dersin tüm sectionlarını kaldır
+    const baseCode = course.code.split('_')[0];
+    setCourses(courses.filter(c => !c.code.startsWith(baseCode)));
   };
 
   const handleCourseRemove = (courseToRemove) => {
     setSelectedCourses(selectedCourses.filter(course => course.code !== courseToRemove.code));
     setTotalCredits(prev => prev - Number(courseToRemove.credits));
     setTotalECTS(prev => prev - Number(courseToRemove.ects));
+    
+    // Çıkarılan dersin tüm sectionlarını alfabetik sırayla geri ekle
+    const baseCode = courseToRemove.code.split('_')[0];
+    const allSectionsOfCourse = originalCourses.filter(c => c.code.startsWith(baseCode));
+    setCourses(prevCourses => {
+      const newCourses = [...prevCourses, ...allSectionsOfCourse];
+      return newCourses.sort((a, b) => a.code.localeCompare(b.code));
+    });
   };
 
   const handleFileUpload = async (event) => {
@@ -65,6 +78,8 @@ function App() {
         const excelData = await readExcelFile(file);
         const parsedCourses = parseCourses(excelData);
         setCourses(parsedCourses);
+        setOriginalCourses(parsedCourses);
+        setIsFileUploaded(true);
       } catch (error) {
         console.error('Excel dosyası okunurken hata oluştu:', error);
         alert('Excel dosyası okunurken bir hata oluştu!');
@@ -144,16 +159,13 @@ function App() {
         </div>
 
         <div className="course-selection">
-          <h2>Ders Seçimi</h2>
-          <div className="file-upload">
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileUpload}
-              className="file-input"
-            />
+          <div className="selection-header">
+            <h2>Ders Seçimi</h2>
+            <div className="credits-info">
+              <span>Toplam Kredi: {totalCredits}</span>
+            </div>
           </div>
-
+          
           <div className="search-bar">
             <input
               type="text"
@@ -163,56 +175,65 @@ function App() {
             />
           </div>
 
-          <div className="credits-info">
-            <p>Toplam Kredi: {totalCredits}</p>
-            <p>Toplam AKTS: {totalECTS}</p>
+          <div className="available-courses">
+            <div className="course-list">
+              {filteredCourses.map((course, index) => {
+                const [code, sectionFull] = course.code.split('_');
+                const section = sectionFull ? sectionFull.split('-')[0] : '';
+                
+                return (
+                  <div 
+                    key={index} 
+                    className="course-item"
+                    onClick={() => handleCourseSelect(course)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="course-info">
+                      <div className="course-header">
+                        <span className="course-code">{code}</span>
+                        <span className="section-code">{section}</span>
+                        <span className="course-name">{course.name}</span>
+                      </div>
+                      <div className="course-details">
+                        <span>{course.credits} Kredi</span>
+                        <span className="separator">-</span>
+                        <span>{course.lecturer}</span>
+                      </div>
+                      <div className="course-schedule">
+                        {course.schedule.map(s => 
+                          `${s.day} ${s.startHour}:00-${s.endHour}:00`
+                        ).join(', ')}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="selected-courses">
-            <h3>Seçili Dersler</h3>
             {selectedCourses.map((course, index) => (
-              <div key={index} className="selected-course-item">
+              <div 
+                key={index} 
+                className="selected-course-item"
+                onClick={() => handleCourseRemove(course)}
+              >
                 <span>{course.code} - {course.name}</span>
                 <span>{course.schedule.map(s => `${s.day} ${s.startHour}:00-${s.endHour}:00`).join(', ')}</span>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCourseRemove(course);
-                  }}
-                  className="remove-button"
-                >
-                  Çıkar
-                </button>
               </div>
             ))}
           </div>
 
-          <div className="available-courses">
-            <h3>Mevcut Dersler</h3>
-            <div className="course-list">
-              {filteredCourses.map((course, index) => (
-                <div 
-                  key={index} 
-                  className="course-item"
-                  onClick={() => handleCourseSelect(course)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="course-info">
-                    <strong>{course.code}</strong>
-                    <p>{course.name}</p>
-                    <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
-                    <p>Öğretim Üyesi: {course.lecturer}</p>
-                    <p>Derslik: {course.room}</p>
-                    <p>
-                      {course.schedule.map(s => 
-                        `${s.day} ${s.startHour}:00-${s.endHour}:00`
-                      ).join(', ')}
-                    </p>
-                  </div>
-                </div>
-              ))}
+          {!isFileUploaded && (
+            <div className="file-upload">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileUpload}
+                className="file-input"
+              />
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

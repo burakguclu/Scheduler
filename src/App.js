@@ -43,6 +43,7 @@ function App() {
     setSelectedCourses([...selectedCourses, course]);
     setTotalCredits(prev => prev + Number(course.credits));
     setTotalECTS(prev => prev + Number(course.ects));
+    setSearchTerm(''); // Arama kutusunu temizle
   };
 
   const handleCourseRemove = (courseToRemove) => {

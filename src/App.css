@@ -159,9 +159,84 @@ tr:nth-child(even) {
 }
 
 .scheduled-course {
-  background-color: #007bff;
+  margin: 2px 0;
+  border-radius: 4px;
   color: white;
-  padding: 2px;
-  border-radius: 3px;
   font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.course-code {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.course-room {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.split-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Sol taraf 2 birim, sağ taraf 1 birim genişlikte */
+  gap: 20px;
+  align-items: start;
+}
+
+.course-selection {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.available-courses {
+  margin-top: 20px;
+}
+
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.course-info {
+  margin-bottom: 10px;
+}
+
+.add-button {
+  width: 100%;
+}
+
+/* Scrollbar stilleri */
+.course-selection::-webkit-scrollbar {
+  width: 8px;
+}
+
+.course-selection::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.course-selection::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.course-selection::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+td {
+  height: 60px;
+  vertical-align: top;
+  padding: 4px;
 }

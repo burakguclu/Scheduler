@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { parseCourses } from './utils/courseParser';
+import { readExcelFile } from './utils/excelReader';
 
 function App() {
   const [selectedCourses, setSelectedCourses] = useState([]);
@@ -11,8 +12,22 @@ function App() {
 
   // Excel verilerini yükle
   useEffect(() => {
-    // Burada Excel verilerini parse edip courses state'ine atayacağız
-    const excelData = []; // Excel verilerini buraya ekleyeceğiz
+    const excelData = [
+      {
+        Year: '2024',
+        Period: '002',
+        Code: 'CMPE 114',
+        Name: 'Fundamentals of Programming II',
+        Section: 'CMPE 114_01',
+        Lecturer: 'Özlem Albayrak',
+        Room: 'D026 A514-PC-L',
+        Schedule: 'Mo 13-15 We 16-18',
+        Cr: '3',
+        ECTS: '6'
+      },
+      // Diğer dersleri de buraya ekleyin...
+    ];
+    
     const parsedCourses = parseCourses(excelData);
     setCourses(parsedCourses);
   }, []);
@@ -53,14 +68,90 @@ function App() {
     setTotalECTS(prev => prev - Number(courseToRemove.ects));
   };
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const excelData = await readExcelFile(file);
+        const parsedCourses = parseCourses(excelData);
+        setCourses(parsedCourses);
+      } catch (error) {
+        console.error('Excel dosyası okunurken hata oluştu:', error);
+        alert('Excel dosyası okunurken bir hata oluştu!');
+      }
+    }
+  };
+
   const filteredCourses = courses.filter(course => 
     course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Haftalık program hücresinin içeriğini render eden fonksiyon
+  const renderScheduleCell = (day, timeSlot) => {
+    const hour = parseInt(timeSlot.split(':')[0]);
+    const coursesInSlot = selectedCourses.filter(course => 
+      course.schedule.some(s => 
+        s.day === day && 
+        s.startHour <= hour && 
+        s.endHour > hour
+      )
+    );
+
+    return coursesInSlot.map((course, idx) => (
+      <div 
+        key={`${course.code}-${idx}`} 
+        className="scheduled-course"
+        style={{
+          backgroundColor: `hsl(${hashCode(course.code) % 360}, 70%, 60%)`,
+          padding: '4px',
+          marginBottom: coursesInSlot.length > 1 ? '2px' : '0'
+        }}
+      >
+        <div className="course-code">{course.code}</div>
+        <div className="course-room">{course.room}</div>
+      </div>
+    ));
+  };
+
+  // Renk oluşturmak için yardımcı fonksiyon
+  const hashCode = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash);
+  };
+
   return (
     <div className="App">
-      <div className="container">
+      <div className="container split-layout">
+        <div className="weekly-schedule">
+          <h2>Haftalık Program</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Saat</th>
+                {weekDays.map(day => (
+                  <th key={day}>{day}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {timeSlots.map((timeSlot, index) => (
+                <tr key={index}>
+                  <td>{timeSlot}</td>
+                  {weekDays.map(day => (
+                    <td key={`${day}-${timeSlot}`}>
+                      {renderScheduleCell(day, timeSlot)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
         <div className="course-selection">
           <h2>Ders Seçimi</h2>
           <div className="search-bar">
@@ -93,74 +184,40 @@ function App() {
             ))}
           </div>
 
-          <div className="course-list">
+          <div className="available-courses">
             <h3>Mevcut Dersler</h3>
-            {filteredCourses.map((course, index) => (
-              <div key={index} className="course-item">
-                <div className="course-info">
-                  <strong>{course.code}</strong>
-                  <p>{course.name}</p>
-                  <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
-                  <p>Öğretim Üyesi: {course.lecturer}</p>
-                  <p>Derslik: {course.room}</p>
-                  <p>
-                    {course.schedule.map(s => 
-                      `${s.day} ${s.startHour}:00-${s.endHour}:00`
-                    ).join(', ')}
-                  </p>
+            <div className="course-list">
+              {filteredCourses.map((course, index) => (
+                <div key={index} className="course-item">
+                  <div className="course-info">
+                    <strong>{course.code}</strong>
+                    <p>{course.name}</p>
+                    <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
+                    <p>Öğretim Üyesi: {course.lecturer}</p>
+                    <p>Derslik: {course.room}</p>
+                    <p>
+                      {course.schedule.map(s => 
+                        `${s.day} ${s.startHour}:00-${s.endHour}:00`
+                      ).join(', ')}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => handleCourseSelect(course)}
+                    className="add-button"
+                  >
+                    Ekle
+                  </button>
                 </div>
-                <button 
-                  onClick={() => handleCourseSelect(course)}
-                  className="add-button"
-                >
-                  Ekle
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="weekly-schedule">
-          <h2>Haftalık Program</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Saat</th>
-                {weekDays.map(day => (
-                  <th key={day}>{day}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {timeSlots.map((timeSlot, index) => (
-                <tr key={index}>
-                  <td>{timeSlot}</td>
-                  {weekDays.map(day => (
-                    <td key={`${day}-${timeSlot}`}>
-                      {selectedCourses.map(course => {
-                        const hour = parseInt(timeSlot.split(':')[0]);
-                        const scheduledClass = course.schedule.find(
-                          s => s.day === day && 
-                          s.startHour <= hour && 
-                          s.endHour > hour
-                        );
-                        if (scheduledClass) {
-                          return (
-                            <div className="scheduled-course">
-                              {course.code}
-                              <br />
-                              {course.room}
-                            </div>
-                          );
-                        }
-                        return null;
-                      })}
-                    </td>
-                  ))}
-                </tr>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="file-input"
+          />
         </div>
       </div>
     </div>

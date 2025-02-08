@@ -13,6 +13,7 @@ function App() {
   const [isFileUploaded, setIsFileUploaded] = useState(false);
   const [possibleSchedules, setPossibleSchedules] = useState([]);
   const [selectedScheduleIndex, setSelectedScheduleIndex] = useState(0);
+  const [testCourse, setTestCourse] = useState(null);
 
   // Excel verilerini yükle
   useEffect(() => {
@@ -28,26 +29,36 @@ function App() {
   const weekDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 
   const handleCourseSelect = (course) => {
-    // Ders zaten eklenmişse kontrol
+    console.log('Selecting course:', course);
+
     if (selectedCourses.some(selected => selected.code === course.code)) {
       alert('Bu ders zaten eklenmiş!');
       return;
     }
 
-    // Kredi sınırı kontrolü
     const newTotalCredits = totalCredits + Number(course.credits);
     if (newTotalCredits > 25) {
       alert('Maksimum 25 kredi seçebilirsiniz!');
       return;
     }
 
-    // Çakışma kontrolü
     const hasConflict = selectedCourses.some(selectedCourse => {
       return selectedCourse.schedule.some(selectedTime => {
         return course.schedule.some(newTime => {
-          return selectedTime.day === newTime.day && 
+          const conflict = selectedTime.day === newTime.day && 
                  ((selectedTime.startHour <= newTime.startHour && selectedTime.endHour > newTime.startHour) ||
                   (selectedTime.startHour < newTime.endHour && selectedTime.endHour >= newTime.endHour));
+          
+          if (conflict) {
+            console.log('Conflict detected:', {
+              existingCourse: selectedCourse.code,
+              newCourse: course.code,
+              existingTime: selectedTime,
+              newTime: newTime
+            });
+          }
+          
+          return conflict;
         });
       });
     });
@@ -61,9 +72,11 @@ function App() {
     setTotalCredits(newTotalCredits);
     setTotalECTS(prev => prev + Number(course.ects));
     
-    // Seçilen dersin tüm sectionlarını kaldır
-    const baseCode = course.code.split('_')[0];
-    setCourses(courses.filter(c => !c.code.startsWith(baseCode)));
+    console.log('Course added successfully:', {
+      updatedCourses: [...selectedCourses, course],
+      newTotalCredits,
+      schedule: course.schedule
+    });
   };
 
   // Olası ders programlarını oluştur
@@ -153,24 +166,28 @@ function App() {
   // Render fonksiyonunu güncelle
   const renderScheduleCell = (day, timeSlot) => {
     const hour = parseInt(timeSlot.split(':')[0]);
-    
-    // Bu saat diliminde olan dersleri bul
-    const coursesInSlot = selectedCourses.filter(course => {
-      return course.schedule.some(scheduleItem => {
-        return scheduleItem.day === day && 
-               scheduleItem.startHour <= hour && 
-               scheduleItem.endHour > hour;
-      });
-    });
 
-    // Eğer bu zaman diliminde ders varsa göster
-    if (coursesInSlot.length > 0) {
-      return coursesInSlot.map((course, idx) => (
+    // Seçilen dersler için renklendirme
+    const courseInSlot = selectedCourses.find(course => 
+      course.schedule.some(scheduleItem => 
+        scheduleItem.day === day && 
+        parseInt(scheduleItem.startHour) <= hour && 
+        parseInt(scheduleItem.endHour) > hour
+      )
+    );
+
+    if (courseInSlot) {
+      console.log('Rendering course in slot:', {
+        courseCode: courseInSlot.code,
+        day,
+        hour
+      });
+
+      return (
         <div 
-          key={`${course.code}-${idx}`} 
           className="scheduled-course"
           style={{
-            backgroundColor: `hsl(${hashCode(course.code) % 360}, 70%, 60%)`,
+            backgroundColor: `hsl(${hashCode(courseInSlot.code) % 360}, 70%, 60%)`,
             color: 'white',
             padding: '4px',
             fontSize: '12px',
@@ -180,9 +197,9 @@ function App() {
             justifyContent: 'center'
           }}
         >
-          {course.code.split('_')[0]}
+          {courseInSlot.code.split('_')[0]} - Section {courseInSlot.code.split('_')[1]}
         </div>
-      ));
+      );
     }
 
     return null;
@@ -197,10 +214,23 @@ function App() {
     return Math.abs(hash);
   };
 
+  const handleTestButtonClick = () => {
+    // Örnek bir ders seçimi
+    const exampleCourse = {
+      code: 'TEST_01',
+      schedule: [
+        { day: 'Pazartesi', startHour: 9, endHour: 11 },
+        { day: 'Çarşamba', startHour: 14, endHour: 16 }
+      ]
+    };
+    setTestCourse(exampleCourse);
+  };
+
   return (
     <div className="App">
       <div className="container split-layout">
         <div className="weekly-schedule">
+          <button onClick={handleTestButtonClick}>Test Dersi Ekle</button>
           {possibleSchedules.length > 1 && <ProgramControls />}
           <table>
             <thead>

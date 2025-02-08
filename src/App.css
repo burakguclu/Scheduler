@@ -240,3 +240,22 @@ td {
   vertical-align: top;
   padding: 4px;
 }
+
+.file-upload {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.file-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.file-input:hover {
+  border-color: #007bff;
+}

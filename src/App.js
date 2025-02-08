@@ -12,24 +12,7 @@ function App() {
 
   // Excel verilerini yükle
   useEffect(() => {
-    const excelData = [
-      {
-        Year: '2024',
-        Period: '002',
-        Code: 'CMPE 114',
-        Name: 'Fundamentals of Programming II',
-        Section: 'CMPE 114_01',
-        Lecturer: 'Özlem Albayrak',
-        Room: 'D026 A514-PC-L',
-        Schedule: 'Mo 13-15 We 16-18',
-        Cr: '3',
-        ECTS: '6'
-      },
-      // Diğer dersleri de buraya ekleyin...
-    ];
-    
-    const parsedCourses = parseCourses(excelData);
-    setCourses(parsedCourses);
+    // Excel dosyası yüklenene kadar boş kalacak
   }, []);
 
   // Haftalık program için zaman aralıkları
@@ -154,6 +137,15 @@ function App() {
 
         <div className="course-selection">
           <h2>Ders Seçimi</h2>
+          <div className="file-upload">
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="file-input"
+            />
+          </div>
+
           <div className="search-bar">
             <input
               type="text"
@@ -211,13 +203,6 @@ function App() {
               ))}
             </div>
           </div>
-
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleFileUpload}
-            className="file-input"
-          />
         </div>
       </div>
     </div>

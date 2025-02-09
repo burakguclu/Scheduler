@@ -65,22 +65,32 @@ function parseSchedule(scheduleStr) {
   };
 
   const schedules = [];
-  const parts = scheduleStr.split(' ');
-  
-  for (let i = 0; i < parts.length; i += 2) {
-    const day = days[parts[i]];
-    if (day && parts[i + 1]) {
-      const [start, end] = parts[i + 1].split('-').map(Number);
-      if (!isNaN(start) && !isNaN(end)) {
-        schedules.push({
-          day,
-          startHour: start,
-          endHour: end
-        });
-        console.log('Parsed Schedule:', { day, startHour: start, endHour: end });
-      }
+  const parts = scheduleStr.split(/(?=[A-Z][a-z]{1,2})/); // Günleri ayırmak için regex kullanıyoruz
+
+  parts.forEach(part => {
+    const dayMatch = part.match(/^[A-Z][a-z]{1,2}/);
+    const timeMatches = part.match(/(\d{1,2})\s*-\s*(\d{1,2})/g);
+
+    if (dayMatch && timeMatches) {
+      const day = days[dayMatch[0]];
+
+      timeMatches.forEach(timeMatch => {
+        const [start, end] = timeMatch.split('-').map(time => parseInt(time.trim(), 10));
+        if (day && !isNaN(start) && !isNaN(end)) {
+          schedules.push({
+            day,
+            startHour: start,
+            endHour: end
+          });
+          console.log('Parsed Schedule:', { day, startHour: start, endHour: end });
+        } else {
+          console.error('Invalid time format:', timeMatch);
+        }
+      });
+    } else {
+      console.error('Invalid format:', part);
     }
-  }
-  
+  });
+
   return schedules;
 } 

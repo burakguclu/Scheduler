@@ -72,6 +72,10 @@ function App() {
     setTotalCredits(newTotalCredits);
     setTotalECTS(prev => prev + Number(course.ects));
     
+    // Ders detaylarını kullanıcıya bildir
+    const scheduleDetails = course.schedule.map(s => `${s.day} ${s.startHour}:00-${s.endHour}:00`).join(', ');
+    alert(`Ders Seçildi:\nDers: ${course.name}\nSection: ${course.code.split('_')[1]}\nÖğretim Üyesi: ${course.lecturer}\nSaatler: ${scheduleDetails}`);
+    
     console.log('Course added successfully:', {
       updatedCourses: [...selectedCourses, course],
       newTotalCredits,
@@ -167,7 +171,6 @@ function App() {
   const renderScheduleCell = (day, timeSlot) => {
     const hour = parseInt(timeSlot.split(':')[0]);
 
-    // Seçilen dersler için renklendirme
     const courseInSlot = selectedCourses.find(course => 
       course.schedule.some(scheduleItem => 
         scheduleItem.day === day && 
@@ -230,7 +233,6 @@ function App() {
     <div className="App">
       <div className="container split-layout">
         <div className="weekly-schedule">
-          <button onClick={handleTestButtonClick}>Test Dersi Ekle</button>
           {possibleSchedules.length > 1 && <ProgramControls />}
           <table>
             <thead>

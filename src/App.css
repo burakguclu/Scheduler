@@ -155,9 +155,11 @@ th:first-child {
   left: 0;
   right: 0;
   bottom: 0;
+  transition: all 0.3s ease;
 }
 
 .scheduled-course > div {
+  text-align: center;
   line-height: 1.2;
 }
 
@@ -181,10 +183,10 @@ th:first-child {
 }
 
 .credits-info {
-  background: #e8eaf6;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border-left: 3px solid #1a237e;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
 }
 
 .credits-info span {
@@ -504,4 +506,35 @@ th:first-child {
 .program-controls span {
   color: #1a237e;
   font-weight: 500;
+}
+
+.schedule-controls {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.conflict-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a237e;
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: #e8eaf6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.conflict-toggle:hover {
+  background-color: #c5cae9;
+}
+
+.conflict-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }

@@ -21,6 +21,26 @@ function App() {
     course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Siyah yazı için okunaklı, açık renkler
+  const courseColors = [
+    '#B2DFDB', // Açık Turkuaz
+    '#C5CAE9', // Açık İndigo
+    '#BBDEFB', // Açık Mavi
+    '#C8E6C9', // Açık Yeşil
+    '#D1C4E9', // Açık Mor
+    '#B3E5FC', // Açık Gök Mavisi
+    '#DCEDC8', // Açık Lime
+    '#F0F4C3', // Açık Sarı
+    '#CFD8DC', // Açık Mavi Gri
+    '#E0F2F1'  // Çok Açık Turkuaz
+  ];
+
+  // Rastgele renk seçme fonksiyonu
+  const getRandomColor = () => {
+    const randomIndex = Math.floor(Math.random() * courseColors.length);
+    return courseColors[randomIndex];
+  };
+
   const generateAllScheduleCombinations = (selectedCourses) => {
     if (!selectedCourses || selectedCourses.length === 0) return [[]];
     
@@ -92,6 +112,28 @@ function App() {
       return;
     }
 
+    // Çakışma kontrolü
+    if (!ignoreConflicts) {
+      const hasConflict = selectedCourses.some(selectedCourse => 
+        selectedCourse.sections.some(selectedSection =>
+          course.sections.some(newSection =>
+            newSection.schedule.some(newTime =>
+              selectedSection.schedule.some(existingTime =>
+                existingTime.day === newTime.day &&
+                ((existingTime.startHour <= newTime.startHour && existingTime.endHour > newTime.startHour) ||
+                 (existingTime.startHour < newTime.endHour && existingTime.endHour >= newTime.endHour))
+              )
+            )
+          )
+        )
+      );
+
+      if (hasConflict) {
+        alert('Bu ders mevcut derslerinizle çakışıyor! Eklemek için çakışmalara izin vermeniz gerekiyor.');
+        return;
+      }
+    }
+
     const newSelectedCourses = [...selectedCourses, course];
     setSelectedCourses(newSelectedCourses);
     setTotalCredits(newTotalCredits);
@@ -146,15 +188,19 @@ function App() {
     if (coursesInSlot && coursesInSlot.length > 0) {
       const hasConflict = coursesInSlot.length > 1;
       
+      // Her ders için sabit bir renk kullanmak için courseCode'u key olarak kullanalım
+      const courseColor = hasConflict ? '#ff6b6b' : 
+        courseColors[coursesInSlot[0].courseCode.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % courseColors.length];
+      
       return (
         <div 
           className="scheduled-course"
           style={{
-            backgroundColor: hasConflict ? '#ff6b6b' : '#87A96B',
-            color: hasConflict ? 'white' : '#000000',
+            backgroundColor: courseColor,
+            color: '#000000', // Siyah yazı
             padding: '4px',
             fontSize: '12px',
-            fontWeight: 'bold',
+            fontWeight: '500', // Daha kalın yazı
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -170,7 +216,6 @@ function App() {
         </div>
       );
     }
-
     return null;
   };
 
@@ -178,17 +223,6 @@ function App() {
     <div className="App">
       <div className="container split-layout">
         <div className="weekly-schedule">
-          {scheduleOptions.length > 1 && (
-            <div className="program-controls">
-              <button onClick={handlePrevSchedule} disabled={currentScheduleIndex === 0}>
-                ← Önceki Program
-              </button>
-              <span>Program {currentScheduleIndex + 1} / {scheduleOptions.length}</span>
-              <button onClick={handleNextSchedule} disabled={currentScheduleIndex === scheduleOptions.length - 1}>
-                Sonraki Program →
-              </button>
-            </div>
-          )}
           <table>
             <thead>
               <tr>
@@ -213,6 +247,18 @@ function App() {
               ))}
             </tbody>
           </table>
+          
+          {scheduleOptions.length > 1 && (
+            <div className="program-controls">
+              <button onClick={handlePrevSchedule} disabled={currentScheduleIndex === 0}>
+                ← Önceki Program
+              </button>
+              <span>Program {currentScheduleIndex + 1} / {scheduleOptions.length}</span>
+              <button onClick={handleNextSchedule} disabled={currentScheduleIndex === scheduleOptions.length - 1}>
+                Sonraki Program →
+              </button>
+            </div>
+          )}
         </div>
         <div className="course-selection">
           <div className="selection-header">
@@ -258,15 +304,10 @@ function App() {
                       <div className="course-info">
                         <strong>{course.code}</strong>
                         <p>{course.name}</p>
-                        <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
-                        <p>Section Sayısı: {course.sections ? course.sections.length : 0}</p>
-                        <div className="section-list">
-                          {course.sections && course.sections.map((section, idx) => (
-                            <div key={idx} className="section-info">
-                              <small>Section {section.code.split('_')[1]} - {section.lecturer}</small>
-                            </div>
-                          ))}
-                        </div>
+                        <p>Kredi: {course.credits}</p>
+                        {course.sections && course.sections.map((section, idx) => (
+                          <p key={idx}>Section {section.code.split('_')[1]} - {section.lecturer}</p>
+                        ))}
                       </div>
                     </div>
                   ))}

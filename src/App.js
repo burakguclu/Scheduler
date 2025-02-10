@@ -41,7 +41,7 @@ function App() {
     return courseColors[randomIndex];
   };
 
-  const generateAllScheduleCombinations = (selectedCourses) => {
+  const generateAllScheduleCombinations = (selectedCourses, checkConflicts = !ignoreConflicts) => {
     if (!selectedCourses || selectedCourses.length === 0) return [[]];
     
     let combinations = [[]];
@@ -65,7 +65,8 @@ function App() {
             );
           });
           
-          if (!hasConflict || ignoreConflicts) {
+          // Çakışma kontrolü aktif değilse veya çakışma yoksa ekle
+          if (!checkConflicts || !hasConflict) {
             newCombinations.push([...combo, { 
               ...section, 
               courseName: course.name,
@@ -112,8 +113,11 @@ function App() {
       return;
     }
 
-    // Çakışma kontrolü
+    const newSelectedCourses = [...selectedCourses, course];
+    
+    // Önce çakışma kontrolü yap
     if (!ignoreConflicts) {
+      // Mevcut seçili derslerle çakışma kontrolü
       const hasConflict = selectedCourses.some(selectedCourse => 
         selectedCourse.sections.some(selectedSection =>
           course.sections.some(newSection =>
@@ -134,14 +138,18 @@ function App() {
       }
     }
 
-    const newSelectedCourses = [...selectedCourses, course];
+    // Program kombinasyonlarını oluştur
+    const newOptions = generateAllScheduleCombinations(newSelectedCourses, !ignoreConflicts);
+    
+    if (newOptions.length === 0) {
+      alert('Bu dersin hiçbir section\'ı mevcut programınızla uyumlu değil! Ders çakışmalarına izin ver seçeneğini aktif ederek tüm section\'ları görebilirsiniz.');
+      return;
+    }
+
     setSelectedCourses(newSelectedCourses);
     setTotalCredits(newTotalCredits);
     setTotalECTS(prev => prev + Number(course.ects));
-
     setCourses(prev => prev.filter(c => c.code !== course.code));
-
-    const newOptions = generateAllScheduleCombinations(newSelectedCourses);
     setScheduleOptions(newOptions);
     setCurrentScheduleIndex(0);
   };
@@ -172,7 +180,7 @@ function App() {
   };
 
   const handleConflictToggle = () => {
-    // Eğer çakışmalara izin verme kapatılıyorsa
+    // Çakışmalara izin verme kapatılıyorsa
     if (ignoreConflicts) {
       // Mevcut programda çakışma var mı kontrol et
       const hasConflicts = scheduleOptions[currentScheduleIndex]?.some((section1, index1) =>
@@ -192,6 +200,16 @@ function App() {
         alert('Mevcut programınızda çakışan dersler var. Lütfen önce çakışmaları kaldırın, sonra bu seçeneği kapatın.');
         return;
       }
+
+      // Çakışma yoksa yeni program oluştur
+      const newOptions = generateAllScheduleCombinations(selectedCourses, true);
+      setScheduleOptions(newOptions);
+      setCurrentScheduleIndex(0);
+    } else {
+      // Çakışmalara izin verildiğinde tüm kombinasyonları yeniden hesapla
+      const newOptions = generateAllScheduleCombinations(selectedCourses, false);
+      setScheduleOptions(newOptions);
+      setCurrentScheduleIndex(0);
     }
     
     setIgnoreConflicts(!ignoreConflicts);

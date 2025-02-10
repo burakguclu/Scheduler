@@ -12,6 +12,7 @@ function App() {
   const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
   const [ignoreConflicts, setIgnoreConflicts] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFileUploaded, setIsFileUploaded] = useState(false);
 
   const timeSlots = Array.from({ length: 13 }, (_, i) => `${i + 9}:00`);
 
@@ -69,6 +70,7 @@ function App() {
         const excelData = await readExcelFile(file);
         const parsedCourses = parseCourses(excelData);
         setCourses(parsedCourses || []);
+        setIsFileUploaded(true);
       } catch (error) {
         console.error('Excel dosyası okunurken hata oluştu:', error);
         alert('Excel dosyası okunurken bir hata oluştu!');
@@ -95,7 +97,22 @@ function App() {
     setTotalCredits(newTotalCredits);
     setTotalECTS(prev => prev + Number(course.ects));
 
+    setCourses(prev => prev.filter(c => c.code !== course.code));
+
     const newOptions = generateAllScheduleCombinations(newSelectedCourses);
+    setScheduleOptions(newOptions);
+    setCurrentScheduleIndex(0);
+  };
+
+  const handleCourseRemove = (course) => {
+    setSelectedCourses(prev => prev.filter(c => c.code !== course.code));
+    setTotalCredits(prev => prev - Number(course.credits));
+    setTotalECTS(prev => prev - Number(course.ects));
+    
+    setCourses(prev => [...prev, course].sort((a, b) => a.code.localeCompare(b.code)));
+    
+    const updatedSelectedCourses = selectedCourses.filter(c => c.code !== course.code);
+    const newOptions = generateAllScheduleCombinations(updatedSelectedCourses);
     setScheduleOptions(newOptions);
     setCurrentScheduleIndex(0);
   };
@@ -213,50 +230,67 @@ function App() {
             </div>
           </div>
 
-          <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} />
-          
-          <div className="selected-courses">
-            <h3>Seçili Dersler</h3>
-            {selectedCourses.map((course, index) => (
-              <div key={index} className="selected-course-item">
-                <div className="course-info">
-                  <strong>{course.code}</strong>
-                  <p>{course.name}</p>
-                  <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
-                </div>
+          {!isFileUploaded ? (
+            <div className="file-upload-container">
+              <input 
+                type="file" 
+                accept=".xlsx,.xls" 
+                onChange={handleFileUpload} 
+                className="file-input"
+              />
+            </div>
+          ) : (
+            <>
+              <div className="search-container">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Ders ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-            ))}
-          </div>
 
-          <div className="search-container">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Ders ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="course-list">
-            {filteredCourses.map((course, index) => (
-              <div key={index} className="course-item" onClick={() => handleCourseSelect(course)}>
-                <div className="course-info">
-                  <strong>{course.code}</strong>
-                  <p>{course.name}</p>
-                  <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
-                  <p>Section Sayısı: {course.sections ? course.sections.length : 0}</p>
-                  <div className="section-list">
-                    {course.sections && course.sections.map((section, idx) => (
-                      <div key={idx} className="section-info">
-                        <small>Section {section.code.split('_')[1]} - {section.lecturer}</small>
+              <div className="courses-container">
+                <div className="available-courses">
+                  {filteredCourses.map((course, index) => (
+                    <div key={index} className="course-item" onClick={() => handleCourseSelect(course)}>
+                      <div className="course-info">
+                        <strong>{course.code}</strong>
+                        <p>{course.name}</p>
+                        <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
+                        <p>Section Sayısı: {course.sections ? course.sections.length : 0}</p>
+                        <div className="section-list">
+                          {course.sections && course.sections.map((section, idx) => (
+                            <div key={idx} className="section-info">
+                              <small>Section {section.code.split('_')[1]} - {section.lecturer}</small>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="selected-courses">
+                  <h3>Seçili Dersler</h3>
+                  {selectedCourses.map((course, index) => (
+                    <div 
+                      key={index} 
+                      className="selected-course-item"
+                      onClick={() => handleCourseRemove(course)}
+                    >
+                      <div className="course-info">
+                        <strong>{course.code}</strong>
+                        <p>{course.name}</p>
+                        <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -11,6 +11,14 @@ function App() {
   const [scheduleOptions, setScheduleOptions] = useState([[]]);
   const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
   const [ignoreConflicts, setIgnoreConflicts] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const timeSlots = Array.from({ length: 13 }, (_, i) => `${i + 9}:00`);
+
+  const filteredCourses = courses.filter(course => 
+    course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const generateAllScheduleCombinations = (selectedCourses) => {
     if (!selectedCourses || selectedCourses.length === 0) return [[]];
@@ -176,7 +184,7 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {['9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map(timeSlot => (
+              {timeSlots.map(timeSlot => (
                 <tr key={timeSlot}>
                   <td>{timeSlot}</td>
                   {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map(day => (
@@ -205,8 +213,18 @@ function App() {
             </div>
           </div>
           <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} />
+          
+          <div className="search-bar">
+            <input
+              type="text"
+              placeholder="Ders ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
           <div className="course-list">
-            {courses.map((course, index) => (
+            {filteredCourses.map((course, index) => (
               <div key={index} className="course-item" onClick={() => handleCourseSelect(course)}>
                 <div className="course-info">
                   <strong>{course.code}</strong>

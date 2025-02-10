@@ -164,22 +164,27 @@ th:first-child {
 }
 
 .search-bar {
-  margin-bottom: 20px;
+  margin: 15px 0;
+  padding: 0 10px;
 }
 
 .search-bar input {
-  width: 90%;
-  max-width: 400px;
-  padding: 12px;
+  width: 100%;
+  padding: 10px 15px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.3s;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 .search-bar input:focus {
-  border-color: #1a237e;
   outline: none;
+  border-color: #1a237e;
+  box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+}
+
+.search-bar input::placeholder {
+  color: #999;
 }
 
 .credits-info {

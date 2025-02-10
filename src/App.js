@@ -171,6 +171,32 @@ function App() {
     }
   };
 
+  const handleConflictToggle = () => {
+    // Eğer çakışmalara izin verme kapatılıyorsa
+    if (ignoreConflicts) {
+      // Mevcut programda çakışma var mı kontrol et
+      const hasConflicts = scheduleOptions[currentScheduleIndex]?.some((section1, index1) =>
+        scheduleOptions[currentScheduleIndex].some((section2, index2) => {
+          if (index1 >= index2) return false;
+          return section1.schedule.some(time1 =>
+            section2.schedule.some(time2 =>
+              time1.day === time2.day &&
+              ((time1.startHour <= time2.startHour && time1.endHour > time2.startHour) ||
+               (time1.startHour < time2.endHour && time1.endHour >= time2.endHour))
+            )
+          );
+        })
+      );
+
+      if (hasConflicts) {
+        alert('Mevcut programınızda çakışan dersler var. Lütfen önce çakışmaları kaldırın, sonra bu seçeneği kapatın.');
+        return;
+      }
+    }
+    
+    setIgnoreConflicts(!ignoreConflicts);
+  };
+
   const renderScheduleCell = (day, timeSlot) => {
     if (!scheduleOptions[currentScheduleIndex]) return null;
     
@@ -269,7 +295,7 @@ function App() {
                 <input
                   type="checkbox"
                   checked={ignoreConflicts}
-                  onChange={() => setIgnoreConflicts(!ignoreConflicts)}
+                  onChange={handleConflictToggle}
                 />
                 Ders çakışmalarına izin ver
               </label>

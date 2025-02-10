@@ -538,3 +538,18 @@ th:first-child {
   height: 16px;
   cursor: pointer;
 }
+
+.section-list {
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.section-info {
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.section-info:last-child {
+  border-bottom: none;
+}

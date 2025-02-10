@@ -558,3 +558,74 @@ th:first-child {
 .section-info:last-child {
   border-bottom: none;
 }
+
+/* Arama kutusu stilleri */
+.search-container {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #1a237e;
+  box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+/* Seçili dersler listesi stilleri */
+.selected-courses {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.selected-courses h3 {
+  margin: 0 0 15px 0;
+  color: #1a237e;
+  font-size: 1.1em;
+}
+
+.selected-course-item {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border-left: 4px solid #1a237e;
+  transition: all 0.3s ease;
+}
+
+.selected-course-item:last-child {
+  margin-bottom: 0;
+}
+
+.selected-course-item .course-info {
+  margin: 0;
+}
+
+.selected-course-item .course-info strong {
+  color: #1a237e;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.selected-course-item .course-info p {
+  margin: 3px 0;
+  font-size: 0.9em;
+  color: #666;
+}

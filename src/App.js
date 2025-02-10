@@ -212,11 +212,26 @@ function App() {
               </label>
             </div>
           </div>
+
           <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} />
           
-          <div className="search-bar">
+          <div className="selected-courses">
+            <h3>Seçili Dersler</h3>
+            {selectedCourses.map((course, index) => (
+              <div key={index} className="selected-course-item">
+                <div className="course-info">
+                  <strong>{course.code}</strong>
+                  <p>{course.name}</p>
+                  <p>Kredi: {course.credits} | AKTS: {course.ects}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="search-container">
             <input
               type="text"
+              className="search-input"
               placeholder="Ders ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
